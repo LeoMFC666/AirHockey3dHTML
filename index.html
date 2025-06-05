@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Clone 3D Air Hockey - Física e Gamepad</title>
+<title>Air Hockey</title>
 <style>
   body { margin: 0; overflow: hidden; background: #222; }
   #scoreboard {
@@ -14,11 +14,17 @@
     font-size: 20px;
     z-index: 10;
   }
+  #scoreboard strong#azul {
+    color: rgb(0, 130, 205);
+  }
+  #scoreboard strong#vermelho {
+    color: rgb(255, 2, 2);
+  }
 
 </style>
 </head>
 <body>
-<div id="scoreboard">Player 1: 0 | Player 2: 0</div>
+<div id="scoreboard">Jogador <strong id="azul">AZUL:</strong> 0 | Jogador <strong id="vermelho">VERMELHO</strong>: 0</div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
 
