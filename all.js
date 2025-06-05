@@ -3,7 +3,7 @@ scene.background = new THREE.Color(0x0c1445);
 
 function createOutline(object, color = 0x000000, thickness = 0.1) {
   if (object.isMesh) {
-    // Se for mesh simples, cria o outline diretamente
+
     const outline = object.clone();
     outline.material = new THREE.MeshBasicMaterial({
       color: color,
@@ -157,8 +157,8 @@ let player1Vel = new THREE.Vector3();
 let player2Vel = new THREE.Vector3();
 let puckVel = new THREE.Vector3();
 
-const maxSpeed = 1.0;
-const puckSpeedFactor = 3;
+const maxSpeed = 3.0;
+const puckSpeedFactor = 5;
 const friction = 0.92;
 const puckFriction = 0.985;
 const puckBounce = 0.98;
@@ -217,17 +217,26 @@ function getGamepadAxisValue(gamepad, axisIndex) {
 }
 
 function updateGamepadInput() {
-  const gamepad = navigator.getGamepads()[0];
-  if (gamepad) {
-    const leftX = getGamepadAxisValue(gamepad, 0);
-    const leftY = getGamepadAxisValue(gamepad, 1);
-    const rightX = getGamepadAxisValue(gamepad, 2);
-    const rightY = getGamepadAxisValue(gamepad, 3);
+  const gamepads = navigator.getGamepads();
 
-    player1Vel.x += leftX * maxSpeed;
-    player1Vel.z += leftY * maxSpeed;
-    player2Vel.x += rightX * maxSpeed;
-    player2Vel.z += rightY * maxSpeed;
+  // Gamepad 1: controla Jogador 1
+  const gp1 = gamepads[0];
+  if (gp1) {
+    const leftX1 = getGamepadAxisValue(gp1, 0);
+    const leftY1 = getGamepadAxisValue(gp1, 1);
+
+    player1Vel.x += leftX1 * maxSpeed;
+    player1Vel.z += leftY1 * maxSpeed; 
+  }
+
+  
+  const gp2 = gamepads[1];
+  if (gp2) {
+    const leftX2 = getGamepadAxisValue(gp2, 0);
+    const leftY2 = getGamepadAxisValue(gp2, 1);
+
+    player2Vel.x += leftX2 * maxSpeed;
+    player2Vel.z += leftY2 * maxSpeed; 
   }
 }
 
@@ -279,6 +288,7 @@ function checkPuckCollision() {
 
 let score1 = 0;
 let score2 = 0;
+
 const initialPositions = {
   player1: new THREE.Vector3(0, 0, tableHeight / 2 - 25),
   player2: new THREE.Vector3(0, 0, -tableHeight / 2 + 25),
@@ -296,6 +306,10 @@ function resetPositions() {
 }
 
 function checkGoal() {
+  const scoreboard = document.getElementById("scoreboard");
+  scoreboard.innerHTML = scoreboard.innerHTML.replace(/(\d+)(?=\s\|\sJogador)/, score1);
+  scoreboard.innerHTML = scoreboard.innerHTML.replace(/(?<=:\s)(\d+)$/, score2);
+
   const goalWidth = 30;
   if (
     puck.position.z + puckRadius >= tableHeight / 2 &&
@@ -303,6 +317,7 @@ function checkGoal() {
   ) {
     score2++;
     console.log("Gol do jogador vermelho! Placar: " + score1 + " x " + score2);
+    
     resetPositions();
   }
   if (
@@ -310,7 +325,17 @@ function checkGoal() {
     Math.abs(puck.position.x) < goalWidth / 2
   ) {
     score1++;
+    
     console.log("Gol do jogador azul! Placar: " + score1 + " x " + score2);
+    
+    resetPositions();
+  }
+}
+
+function checkScore() {
+  if(score1 >= 10 || score2 >= 10){
+    score1 = 0;
+    score2 = 0;
     resetPositions();
   }
 }
@@ -358,45 +383,8 @@ function animate() {
   player2Vel.multiplyScalar(friction);
 
 function checkPowerUpCollision(player, powerUp) {
-  if (!powerUp.cube.visible) return;
-
-  const playerPos = player.position;
-  const worldPos = new THREE.Vector3();
-  powerUp.group.getWorldPosition(worldPos);
-
-  const dx = playerPos.x - worldPos.x;
-  const dz = playerPos.z - worldPos.z;
-  const dist = Math.sqrt(dx * dx + dz * dz);
-
-  if (dist < 12) {
-    powerUp.cube.visible = false;
-    console.log('Power-up coletado!');
-
- 
-    schedulePowerUpRespawn(powerUp);
-  }
+  powerUp.cube.visible = false;
 }
-
-
-let lastPowerUpRespawnTime = 0;
-
-function schedulePowerUpRespawn(powerUp) {
-  const now = performance.now();
-  const delayMin = 10000;
-  const delayMax = 15000;
-  const elapsedSinceLast = now - lastPowerUpRespawnTime;
-
-  const additionalDelay = elapsedSinceLast < 1000 ? 2000 : 0;
-
-  const delay = delayMin + Math.random() * (delayMax - delayMin) + additionalDelay;
-
-  setTimeout(() => {
-    powerUp.cube.visible = true;
-    lastPowerUpRespawnTime = performance.now();
-    console.log('Power-up reapareceu!');
-  }, delay);
-}
-
 
 powerUps.forEach(pu => {
   checkPowerUpCollision(player1, pu);
@@ -406,6 +394,9 @@ powerUps.forEach(pu => {
 
 
   puck.position.add(puckVel);
+  checkPuckCollision(); 
+
+  checkGoal(); 
   puckVel.multiplyScalar(puckFriction);
 
   checkPuckCollision();
